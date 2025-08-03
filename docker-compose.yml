@@ -1,0 +1,42 @@
+# corporate-semantic-search/docker-compose.yml
+
+version: '3.8'
+
+services:
+  # Наше FastAPI приложение
+  app:
+    build: .  # Собирать образ из Dockerfile в текущей директории
+    container_name: parser_app
+    ports:
+      - "8000:8000" # Пробрасываем порт 8000 из контейнера на хост
+    env_file:
+      - .env        # Подключаем файл с переменными окружения
+    volumes:
+      - ./src:/app/src # Монтируем локальную папку src для live-reload кода
+    depends_on:
+      - redis
+      - minio
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload # --reload удобен для разработки
+
+  # Redis - брокер сообщений и хранилище статусов
+  redis:
+    image: redis:7-alpine
+    container_name: parser_redis
+    ports:
+      - "6379:6379"
+
+  # MinIO - S3-совместимое хранилище
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data # Используем Docker Volume для сохранения данных
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+
+volumes:
+  minio_data: # Декларируем volume для MinIO
