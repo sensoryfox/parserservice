@@ -1,0 +1,8 @@
+marker-pdf[full]
+sqlalchemy[asyncio]
+asyncpg
+minio
+aiohttp
+python-docx
+openpyxl
+pygments

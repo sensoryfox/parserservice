@@ -1,7 +1,7 @@
 # src/core/lifespan.py
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from sensory_data_client import DataClient
+from sensory_data_client import create_data_client, get_settings, DataClientConfig, PostgresConfig, MinioConfig
 from ..adapters.llm_image import ImageDescriber
 from ..services.orchestrator import OrchestratorService
 from .config import settings
@@ -14,7 +14,11 @@ async def lifespan(app: FastAPI):
     app.state.redis = redis_client
     # Создаем один экземпляр DataClient на все приложение
     # Он сам должен подхватить свои настройки из env
-    data_client = DataClient()
+    
+    
+    data_client = create_data_client(DataClientConfig(minio=MinioConfig(endpoint="localhost:9008", bucket='documents')) 
+)
+    print(get_settings())
     
     # Инициализируем адаптер для LLM
     llm_adapter = ImageDescriber(

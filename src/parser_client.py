@@ -54,7 +54,7 @@ class DocParserClient:
         self,
         doc_id: UUID,
         file_name: str,
-        parse_images: bool = True,
+        parse_images: bool = False,
         poll_interval: float = 2.0,
         timeout: float = 300.0
     ) -> dict:
@@ -85,26 +85,25 @@ class DocParserClient:
             if status_res.status == "FAILURE":
                 raise DocParserError(status_res.error, doc_id)
 
-# --- Пример использования клиента ---
-# async def main():
-#     # Предполагается, что search-api загрузил файл в MinIO
-#     # и теперь запускает парсинг.
+async def main():
+    # Предполагается, что search-api загрузил файл в MinIO
+    # и теперь запускает парсинг.
     
-#     DOC_ID = uuid4()
-#     FILE_NAME = "my_financial_report.pdf"
-#     PARSER_URL = "http://localhost:8000" # URL нашего doc-parser сервиса
+    DOC_ID = uuid4()
+    FILE_NAME = "my_financial_report.pdf"
+    PARSER_URL = "http://localhost:8000" # URL нашего doc-parser сервиса
     
-#     # 1. Загрузить файл в MinIO... (эта логика в search-api)
-#     # await data_client.put_object(f"{DOC_ID}/raw/{FILE_NAME}", b"...")
+    # 1. Загрузить файл в MinIO... (эта логика в search-api)
+    # await data_client.put_object(f"{DOC_ID}/raw/{FILE_NAME}", b"...")
     
-#     # 2. Запустить парсинг и дождаться результата
-#     parser_client = DocParserClient(base_url=PARSER_URL)
-#     try:
-#         result = await parser_client.parse_and_wait(doc_id=DOC_ID, file_name=FILE_NAME)
-#         print("\n--- Final Result ---")
-#         print(result) # -> {'lines_count': 150, 'images_count': 3}
-#     except (DocParserError, asyncio.TimeoutError) as e:
-#         print(f"\n--- Error --- \n{e}")
+    # 2. Запустить парсинг и дождаться результата
+    parser_client = DocParserClient(base_url=PARSER_URL)
+    try:
+        result = await parser_client.parse_and_wait(doc_id=DOC_ID, file_name=FILE_NAME)
+        print("\n--- Final Result ---")
+        print(result) # -> {'lines_count': 150, 'images_count': 3}
+    except (DocParserError, asyncio.TimeoutError) as e:
+        print(f"\n--- Error --- \n{e}")
 
-# if __name__ == "__main__":
-#     asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

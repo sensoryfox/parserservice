@@ -1,0 +1,12 @@
+# app-requirements.txt
+# --- Легкие фреймворки и наши собственные библиотеки ---
+fastapi
+uvicorn[standard]
+pydantic-settings
+redis
+
+# Ваша часто обновляемая библиотека.
+# Можно указывать версию, git-репозиторий или просто имя, если она в PyPI.
+# Пример с git: git+https://your-git-repo/sensory-data-client.git@main
+# Пример с PyPI: sensory-data-client==0.1.3
+sensory-data-client

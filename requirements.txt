@@ -4,11 +4,9 @@ pydantic-settings
 sqlalchemy[asyncio]
 asyncpg
 minio
-aiohttp # Для асинхронных HTTP-запросов к LLM
-# Основные зависимости парсеров
-marker-pdf[full] # Включает torch, surya-ocr и т.д.
+aiohttp
+marker-pdf[full] 
 python-docx
 openpyxl
 pygments
-sensory-data-client
 redis

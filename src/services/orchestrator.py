@@ -89,18 +89,16 @@ class OrchestratorService:
 
     # -----------------------------------------------------------------
     async def process_document(
-        self, doc_id: UUID, file_name: str, parse_images: bool = True
+        self, doc_id: UUID, file_name: str, parse_images: bool = False
     ) -> None:
         """Полный конвейер обработки одного документа."""
-        print(f"[Orchestrator] Starting processing for doc_id={doc_id}, file_name='{file_name}'")
         try:
             await self._set_status(doc_id, "IN_PROGRESS")
             print(f"[Orchestrator] Starting processing for doc_id={doc_id}, file_name='{file_name}'")
 
             # СТАДИЯ 1: DOWNLOADING
             await self._set_status(doc_id, "IN_PROGRESS", stage="DOWNLOADING")
-            raw_object_path = f"{doc_id}/raw/{file_name}"
-            raw_bytes = await self._data_client.get_object(raw_object_path)
+            raw_bytes = await self._data_client.get_file(doc_id)
             
             # СТАДИЯ 2: PARSING
             await self._set_status(doc_id, "IN_PROGRESS", stage="PARSING")
