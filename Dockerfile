@@ -36,10 +36,10 @@ COPY app-requirements.txt .
 # Docker начнет пересборку с этого места. Предыдущий слой с marker-pdf останется в кеше!
 RUN pip install --no-cache-dir -r app-requirements.txt
 
-
 # --- СЛОЙ 3: КОД ПРИЛОЖЕНИЯ (самый динамичный слой) ---
 # Копируем исходный код только после установки всех зависимостей.
 COPY ./src ./src
 
+#RUN sensory_data_client init
 # Команда для запуска (без изменений)
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

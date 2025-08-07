@@ -13,6 +13,7 @@ from ..adapters.llm_image import ImageDescriber
 from ..models import Line
 from ..parsers.base import BaseParser
 from ..parsers.pdf_marker import PdfMarkerParser
+from ..parsers.marker_parser import UnifiedMarkerParser
 from ..parsers.docx_parser import DocxParser
 from ..parsers.xlsx_parser import XlsxParser
 from ..parsers.txt_parser import TxtParser
@@ -73,7 +74,7 @@ class OrchestratorService:
     def _register_parsers(self) -> dict[str, BaseParser]:
         """Регистрирует все доступные парсеры по расширениям файлов."""
         return {
-            ".pdf": PdfMarkerParser(), ".pptx": PdfMarkerParser(),
+            ".pdf": UnifiedMarkerParser(), ".pptx": PdfMarkerParser(),
             ".docx": DocxParser(),
             ".xlsx": XlsxParser(), ".xls": XlsxParser(),
             ".txt": TxtParser(), ".md": TxtParser(),

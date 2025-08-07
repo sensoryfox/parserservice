@@ -16,8 +16,12 @@ async def lifespan(app: FastAPI):
     # Он сам должен подхватить свои настройки из env
     
     
-    data_client = create_data_client(DataClientConfig(minio=MinioConfig(endpoint="localhost:9008", bucket='documents')) 
-)
+    data_client = create_data_client(DataClientConfig(postgres = PostgresConfig(user = "postgres",
+                                                            password = "postgres",
+                                                            host = "postgres",
+                                                            port=5432), 
+                                                minio = MinioConfig(endpoint="minio:9000",  bucket = "corporate")))
+
     print(get_settings())
     
     # Инициализируем адаптер для LLM

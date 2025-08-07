@@ -14,8 +14,8 @@ from .base import BaseParser
 from ..core.config import MarkerSettings # Импортируем нашу модель настроек
 
 class UnifiedMarkerParser(BaseParser):
-    def __init__(self, settings: MarkerSettings):
-        self.settings = settings
+    def __init__(self):
+        self.settings = MarkerSettings()
         # Предварительно создаем модели один раз, это может быть ресурсоемко
         self._model_dict = create_model_dict()
 
@@ -46,9 +46,11 @@ class UnifiedMarkerParser(BaseParser):
         images: List[ImageArtefact] = []
         
         # Рекурсивно обходим дерево блоков
+        print("*"*80)
+        print(rendered_doc)
         self._process_marker_blocks(
             doc_id=doc_id,
-            blocks=rendered_doc.children, 
+            blocks=rendered_doc, 
             lines=lines, 
             images=images,
             parse_images=parse_images

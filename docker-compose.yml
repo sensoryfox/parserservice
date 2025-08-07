@@ -1,47 +1,88 @@
-# corporate-semantic-search/docker-compose.yml
-
-version: '3.8'
-
+# 'version' удален, он больше не нужен
 services:
-  # Наше FastAPI приложение
-  app:
-    build: .  # Собирать образ из Dockerfile в текущей директории
-    container_name: parser_app
+  #########################################
+  #           БАЗОВЫЕ СЕРВИСЫ             #
+  #########################################
+  postgres:
+    image: postgres:15-alpine
+    container_name: doc-parser-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "8000:8000" # Пробрасываем порт 8000 из контейнера на хост
-    env_file:
-      - .env        # Подключаем файл с переменными окружения
+      # <-- ИСПРАВЛЕНО: Используем переменную только для порта хоста
+      - "${HOST_POSTGRES_PORT}:5432"
     volumes:
-      - ./src:/app/src # Монтируем локальную папку src для live-reload кода
-    depends_on:
-      - redis
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload # --reload удобен для разработки
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Redis - брокер сообщений и хранилище статусов
+  minio:
+    image: minio/minio:latest
+    container_name: doc-parser-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESSKEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRETKEY}
+    ports:
+      # <-- ИСПРАВЛЕНО: Используем переменную только для порта хоста
+      - "${HOST_MINIO_PORT}:9000" 
+      - "9009:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
   redis:
     image: redis:7-alpine
-    container_name: parser_redis
+    container_name: doc-parser-redis
     ports:
-      - "6379:6379"
-  # # MinIO - S3-совместимое хранилище
-  # minio:
-  #   image: minio/minio:latest
-  #   command: server /data --console-address ":9001"
-  #   ports:
-  #     - "9000:9000"
-  #     - "9001:9001"
-  #   volumes:
-  #     - minio_data:/data # Используем Docker Volume для сохранения данных
-  #   environment:
-  #     - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-  #     - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      # <-- ИСПРАВЛЕНО: Используем переменную только для порта хоста
+      - "${HOST_REDIS_PORT}:6379"
 
-# volumes:
-#   minio_data: # Декларируем volume для MinIO
+  #########################################
+  #        НАШЕ ГЛАВНОЕ ПРИЛОЖЕНИЕ        #
+  #########################################
+  parser_app:
+    build: .
+    container_name: doc-parser-app
+    ports:
+      - "${HOST_APP_PORT}:8000"
+    env_file:
+      - .env # Загружаем все переменные, включая учетные данные
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      # <-- ВАЖНО: Приложение внутри контейнера использует "внутренние" имена
+      - POSTGRES_HOST=${POSTGRES_HOST}       # -> postgres
+      - POSTGRES_PORT=${POSTGRES_PORT}       # -> 5432
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}     # -> minio:9000
+      - REDIS_URL=${REDIS_URL}               # -> redis://redis:6379/0
+    volumes:
+      - ./src:/app/src
+      - models_cache:/root/.cache/datalab 
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: 1
+                  capabilities: [gpu]
+volumes:
+  pg_data:
+  minio_data:
+  models_cache: {}
